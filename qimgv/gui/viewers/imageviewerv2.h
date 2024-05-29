@@ -9,6 +9,8 @@
 #include <QScrollBar>
 #include <QMovie>
 #include <QColor>
+#include <QEvent>
+#include <QNativeGestureEvent>
 #include <QTimer>
 #include <QDebug>
 #include <memory>
@@ -102,6 +104,7 @@ public slots:
     bool lockViewEnabled();
 
 protected:
+    bool event(QEvent *event) override;
     virtual void mousePressEvent(QMouseEvent *event);
     virtual void mouseMoveEvent(QMouseEvent* event);
     virtual void mouseReleaseEvent(QMouseEvent *event);
@@ -192,6 +195,7 @@ private:
     void applySavedViewportPos();
     void saveViewportPos();
     void lockZoom();
-    void doZoomIn(bool atCursor);
-    void doZoomOut(bool atCursor);
+    void doZoomIn(bool atCursor, float step);
+    void doZoomOut(bool atCursor, float step);
+    void nativeGestureEvent(QNativeGestureEvent *event);
 };

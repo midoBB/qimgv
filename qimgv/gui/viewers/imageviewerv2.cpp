@@ -463,6 +463,27 @@ bool ImageViewerV2::hasAnimation() const {
     return (movie != nullptr);
 }
 
+bool ImageViewerV2::event(QEvent *event) {
+    if (event->type() == QEvent::NativeGesture) {
+        nativeGestureEvent(static_cast<QNativeGestureEvent *>(event));
+        return true;
+    }
+    return QWidget::event(event);
+}
+
+void ImageViewerV2::nativeGestureEvent(QNativeGestureEvent *event) {
+    if (event->gestureType() == Qt::ZoomNativeGesture) {
+        qreal zoomFactor = event->value();
+        if (zoomFactor > 0) {
+            doZoomIn(true, zoomStep * 0.2);
+        } else {
+            doZoomOut(true, zoomStep * 0.2);
+        }
+        return;
+    }
+}
+
+
 //  Right button zooming / dragging logic
 //  mouseMoveStartPos: stores the previous mouseMoveEvent() position,
 //                     used to calculate delta.
@@ -993,25 +1014,25 @@ void ImageViewerV2::zoomAnchored(float newScale) {
 
 // zoom in around viewport center
 void ImageViewerV2::zoomIn() {
-    doZoomIn(false);
+    doZoomIn(false, zoomStep);
 }
 
 // zoom in around cursor if its inside window
 void ImageViewerV2::zoomInCursor() {
-    doZoomIn(true);
+    doZoomIn(true, zoomStep);
 }
 
-void ImageViewerV2::doZoomIn(bool atCursor) {
+void ImageViewerV2::doZoomIn(bool atCursor, float step) {
     if(atCursor && underMouse())
         setZoomAnchor(mapFromGlobal(cursor().pos()));
     else
         setZoomAnchor(viewport()->rect().center());
-    float newScale = currentScale() * (1.0f + zoomStep);
+    float newScale = currentScale() * (1.0f + step);
     if(useFixedZoomLevels && zoomLevels.count()) {
         if(currentScale() < zoomLevels.first()) {
-            newScale = qMin(currentScale() * (1.0f + zoomStep), zoomLevels.first());
+            newScale = qMin(currentScale() * (1.0f + step), zoomLevels.first());
         } else if(currentScale() >= zoomLevels.last()) {
-            newScale = currentScale() * (1.0f + zoomStep);
+            newScale = currentScale() * (1.0f + step);
         } else {
             for(int i = 0; i < zoomLevels.count(); i++) {
                 float level = zoomLevels.at(i);
@@ -1032,25 +1053,25 @@ void ImageViewerV2::doZoomIn(bool atCursor) {
 
 // zoom out around viewport center
 void ImageViewerV2::zoomOut() {
-    doZoomOut(false);
+    doZoomOut(false, zoomStep);
 }
 
 // zoom out around cursor if its inside window
 void ImageViewerV2::zoomOutCursor() {
-    doZoomOut(true);
+    doZoomOut(true, zoomStep);
 }
 
-void ImageViewerV2::doZoomOut(bool atCursor) {
+void ImageViewerV2::doZoomOut(bool atCursor, float step) {
     if(atCursor && underMouse())
         setZoomAnchor(mapFromGlobal(cursor().pos()));
     else
         setZoomAnchor(viewport()->rect().center());
-    float newScale = currentScale() * (1.0f - zoomStep);
+    float newScale = currentScale() * (1.0f - step);
     if(useFixedZoomLevels && zoomLevels.count()) {
         if(currentScale() > zoomLevels.last()) {
-            newScale = qMax(zoomLevels.last(), currentScale() * (1.0f - zoomStep));
+            newScale = qMax(zoomLevels.last(), currentScale() * (1.0f - step));
         } else if(currentScale() <= zoomLevels.first()) {
-            newScale = currentScale() * (1.0f - zoomStep);
+            newScale = currentScale() * (1.0f - step);
         } else {
             for(int i = zoomLevels.count() - 1; i >= 0; i--) {
                 float level = zoomLevels.at(i);
